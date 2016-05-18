@@ -90,6 +90,8 @@ enum Direction {
     GLKMatrix4 _modelViewProjectionMatrix;
     GLKMatrix3 _normalMatrix;
     float _rotation;
+    float _hRotation;
+    float _vRotation;
     
     GLuint _vertexArray;
     GLuint _vertexBuffer;
@@ -102,8 +104,8 @@ enum Direction {
 @property (strong, nonatomic) IBOutlet UISwipeGestureRecognizer *swipeRight;
 @property (strong, nonatomic) IBOutlet UISwipeGestureRecognizer *swipeUp;
 @property (strong, nonatomic) IBOutlet UISwipeGestureRecognizer *swipeDown;
-@property (strong, nonatomic) IBOutlet UITapGestureRecognizer *tabToStop;
-@property (strong, nonatomic) IBOutlet UITapGestureRecognizer *doubleTabToScale;
+@property (strong, nonatomic) IBOutlet UITapGestureRecognizer *tapRecognizer;
+@property (strong, nonatomic) IBOutlet UITapGestureRecognizer *doubleTapRecognizer;
 - (void)setupGL;
 - (void)tearDownGL;
 
@@ -216,48 +218,36 @@ enum Direction {
     
     self.effect.transform.projectionMatrix = projectionMatrix;
     
-    GLKMatrix4 baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, -4.0f);
-    baseModelViewMatrix = GLKMatrix4Rotate(baseModelViewMatrix, _rotation, 0.0f, 1.0f, 0.0f);
+//    GLKMatrix4 baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, -4.0f);
+//    baseModelViewMatrix = GLKMatrix4Rotate(baseModelViewMatrix, _rotation, 0.0f, 1.0f, 0.0f);
     
     // Compute the model view matrix for the object rendered with GLKit
-    GLKMatrix4 modelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, -1.5f);
+    GLKMatrix4 modelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, -2.0f);
+//    GLKMatrix4 modelViewMatrix = GLKMatrix4WithMatrix(self.effect.transform.modelviewMatrix);
     
-    if (!(_direction & STOPPED)) {
-        if (_direction & SCALED) {
-            GLKMatrix4Scale(modelViewMatrix, 2.0f, 2.0f, 2.0f);
-        } else {
-            GLKMatrix4Scale(modelViewMatrix, 1.0f, 1.0f, 1.0f);
-        }
-        
-        if (_direction & UP) {
-            _rotation += self.timeSinceLastUpdate * 0.5f;
-            GLKMatrix4RotateX(modelViewMatrix, _rotation);
-        } else if (_direction & DOWN) {
-            _rotation -= self.timeSinceLastUpdate * 0.5f;
-            GLKMatrix4RotateX(modelViewMatrix, _rotation);
-        }
-        if (_direction & LEFT) {
-            _rotation -= self.timeSinceLastUpdate * 0.5f;
-            GLKMatrix4RotateY(modelViewMatrix, _rotation);
-        } else if (_direction & RIGHT) {
-            _rotation += self.timeSinceLastUpdate * 0.5f;
-            GLKMatrix4RotateY(modelViewMatrix, _rotation);
-        }
+    if (_direction & SCALED) {
+        modelViewMatrix = GLKMatrix4Scale(modelViewMatrix, 0.5f, 0.5f, 0.5f);
+    } else {
+        modelViewMatrix = GLKMatrix4Scale(modelViewMatrix, 1.0f, 1.0f, 1.0f);
     }
     
-    //modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, _rotation, 1.0f, 1.0f, 1.0f);
-    modelViewMatrix = GLKMatrix4Multiply(baseModelViewMatrix, modelViewMatrix);
+    // Rotating model view matrix with precalculated angles.
+    modelViewMatrix = GLKMatrix4RotateX(modelViewMatrix, _hRotation);
+    modelViewMatrix = GLKMatrix4RotateY(modelViewMatrix, _vRotation);
+    
+    // Recalculating horizontal and vertical angles of rotation
+    if (_direction & UP) {
+        _hRotation -= (_direction & STOPPED) ? 0 : self.timeSinceLastUpdate * 0.5f;
+    } else if (_direction & DOWN) {
+        _hRotation += (_direction & STOPPED) ? 0 : self.timeSinceLastUpdate * 0.5f;
+    }
+    if (_direction & LEFT) {
+        _vRotation -=  (_direction & STOPPED) ? 0 :self.timeSinceLastUpdate * 0.5f;
+    } else if (_direction & RIGHT) {
+        _vRotation += (_direction & STOPPED) ? 0 : self.timeSinceLastUpdate * 0.5f;
+    }
     
     self.effect.transform.modelviewMatrix = modelViewMatrix;
-    
-    // Compute the model view matrix for the object rendered with ES2
-    modelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, 1.5f);
-    modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, _rotation, 1.0f, 1.0f, 1.0f);
-    modelViewMatrix = GLKMatrix4Multiply(baseModelViewMatrix, modelViewMatrix);
-    
-    _normalMatrix = GLKMatrix3InvertAndTranspose(GLKMatrix4GetMatrix3(modelViewMatrix), NULL);
-    
-    _modelViewProjectionMatrix = GLKMatrix4Multiply(projectionMatrix, modelViewMatrix);
 }
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
@@ -434,30 +424,36 @@ enum Direction {
 }
 
 - (IBAction)onTap:(id)sender {
-    _direction ^= STOPPED;
+    _direction ^= SCALED;
 }
 
 - (IBAction)onSwipeUp:(id)sender {
+    _direction &= ~STOPPED;
     _direction &= ~DOWN;
     _direction |= UP;
 }
 
 - (IBAction)onSwipeDown:(id)sender {
+    _direction &= ~STOPPED;
     _direction &= ~UP;
     _direction |= DOWN;
 }
 
 - (IBAction)onSwipeLeft:(id)sender {
+    _direction &= ~STOPPED;
     _direction &= ~RIGHT;
     _direction |= LEFT;
 }
 
 - (IBAction)onSwipeRight:(id)sender {
+    _direction &= ~STOPPED;
     _direction &= ~LEFT;
-    _direction |= RIGHT;}
+    _direction |= RIGHT;
+}
 
 - (IBAction)onDoubleTap:(id)sender {
-    _direction ^= SCALED;
+    _direction |= STOPPED;
+    _direction &= ~(UP | DOWN | LEFT | RIGHT);
 }
 
 @end

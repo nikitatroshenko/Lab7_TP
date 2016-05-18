@@ -27,12 +27,12 @@
                         </connections>
                     </view>
                     <connections>
-                        <outlet property="doubleTabToScale" destination="frB-GZ-FHg" id="kLe-rj-ggq"/>
+                        <outlet property="doubleTapRecognizer" destination="frB-GZ-FHg" id="joe-Ws-Cqd"/>
                         <outlet property="swipeDown" destination="yFT-Hw-Mep" id="L1c-ef-LEm"/>
                         <outlet property="swipeLeft" destination="dk4-up-Up6" id="6Jr-4g-9rc"/>
                         <outlet property="swipeRight" destination="hBD-7f-w5a" id="JJE-fP-kv4"/>
                         <outlet property="swipeUp" destination="wUi-d9-Cyl" id="w6l-f4-cxo"/>
-                        <outlet property="tabToStop" destination="tyY-QJ-SRg" id="pBH-gZ-Px2"/>
+                        <outlet property="tapRecognizer" destination="tyY-QJ-SRg" id="YGu-Q8-kth"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="btX-cZ-eVz" sceneMemberID="firstResponder"/>
