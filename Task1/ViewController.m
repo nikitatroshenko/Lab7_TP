@@ -18,6 +18,7 @@
 @property (weak, nonatomic) IBOutlet UISegmentedControl *sgmColourChooser;
 @property (weak, nonatomic) IBOutlet UISlider *sldPenWidth;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *sgmLineCapChooser;
+@property (weak, nonatomic) IBOutlet UIButton *btnSave;
 @property CGPoint lastPoint;
 
 @end
@@ -81,6 +82,23 @@
     UIGraphicsEndImageContext();
     
     _lastPoint = currentPoint;
+}
+
+- (IBAction)onSavePressed:(id)sender {
+    UIImage *canvasImage = [self captureView];
+    UIImageWriteToSavedPhotosAlbum(canvasImage, nil, nil, nil);
+}
+
+- (UIImage *)captureView {
+    CGRect rect = [_imgCanvas bounds];
+    
+    UIGraphicsBeginImageContext(rect.size);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    [self.view.layer renderInContext:context];
+    UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return img;
+    
 }
 
 - (void)didReceiveMemoryWarning {
